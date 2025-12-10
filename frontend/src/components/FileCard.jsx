@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { downloadFile, deleteFile, fetchFileBlob } from '../services/api';
+import { downloadFile, deleteFile } from '../services/api';
 import { toast } from 'react-toastify';
 import Loader from './Loader';
+import PreviewModal from './PreviewModal';
 
 /**
  * FileCard Component
@@ -9,7 +10,7 @@ import Loader from './Loader';
  * Displays a single document with:
  * - Filename, category, tags
  * - Download and Delete actions
- * - Preview functionality
+ * - Preview functionality in modal
  * - PIN prompts for protected files
  * - Loading states for actions
  * - Clean card-based design
@@ -17,31 +18,10 @@ import Loader from './Loader';
 const FileCard = ({ file, onDelete }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
-  const handlePreview = async () => {
-    try {
-      setIsDownloading(true);
-      let pin = null;
-      if (file.requiresPIN) {
-        pin = window.prompt('Enter PIN to preview this file:');
-        if (!pin) {
-          setIsDownloading(false);
-          return;
-        }
-      }
-      const blob = await fetchFileBlob(file.id, pin);
-      const fileType = file.originalFilename.split('.').pop().toLowerCase();
-      const url = window.URL.createObjectURL(blob);
-      if (['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
-        window.open(url, '_blank');
-      } else {
-        toast.info('Preview not available for this file type');
-      }
-    } catch (error) {
-      // Error is handled by API interceptor
-    } finally {
-      setIsDownloading(false);
-    }
+  const handlePreviewClick = () => {
+    setShowPreview(true);
   };
 
   const handleDownload = async () => {
@@ -117,7 +97,7 @@ const FileCard = ({ file, onDelete }) => {
         <div className="flex-1 min-w-0">
           {/* Filename */}
           <button
-            onClick={handlePreview}
+            onClick={handlePreviewClick}
             disabled={isDownloading || isDeleting}
             className="text-base sm:text-lg font-medium text-lavender hover:underline truncate mb-2 text-left disabled:opacity-50 cursor-pointer"
             title="Click to preview"
@@ -210,6 +190,13 @@ const FileCard = ({ file, onDelete }) => {
           </button>
         </div>
       </div>
+
+      <PreviewModal
+        file={file}
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        onDownload={handleDownload}
+      />
     </div>
   );
 };
