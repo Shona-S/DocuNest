@@ -99,9 +99,16 @@ const FileCard = ({ file, onDelete }) => {
           <button
             onClick={handlePreviewClick}
             disabled={isDownloading || isDeleting}
-              className="text-base sm:text-lg font-medium text-lavender hover:underline mb-2 text-left disabled:opacity-50 cursor-pointer break-words line-clamp-2"
-              title={file.originalFilename}
-              type="button"
+            className="text-base sm:text-lg font-medium text-lavender hover:underline mb-2 text-left disabled:opacity-50 cursor-pointer break-words"
+            title={file.originalFilename}
+            type="button"
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
           >
             {file.originalFilename}
           </button>
