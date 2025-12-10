@@ -99,8 +99,9 @@ const FileCard = ({ file, onDelete }) => {
           <button
             onClick={handlePreviewClick}
             disabled={isDownloading || isDeleting}
-            className="text-base sm:text-lg font-medium text-lavender hover:underline truncate mb-2 text-left disabled:opacity-50 cursor-pointer"
-            title="Click to preview"
+              className="text-base sm:text-lg font-medium text-lavender hover:underline mb-2 text-left disabled:opacity-50 cursor-pointer break-words line-clamp-2"
+              title={file.originalFilename}
+              type="button"
           >
             {file.originalFilename}
           </button>

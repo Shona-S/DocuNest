@@ -71,16 +71,26 @@ const PreviewModal = ({ file, isOpen, onClose, onDownload }) => {
     }
   };
 
-  return (
+    const handleCloseClick = (e) => {
+      e.stopPropagation();
+      onClose();
+    };
+
+    const handleDownloadClick = (e) => {
+      e.stopPropagation();
+      onDownload();
+    };
+
+    return (
     <div
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-surface rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+        <div className="bg-surface rounded-lg w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg sm:text-xl font-semibold text-text truncate">
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border flex-shrink-0">
+            <div className="flex-1 min-w-0 pr-4">
+              <h2 className="text-base sm:text-lg font-semibold text-text line-clamp-2 break-words">
               {file.originalFilename}
             </h2>
             <p className="text-xs sm:text-sm text-text-secondary mt-1">
@@ -88,9 +98,10 @@ const PreviewModal = ({ file, isOpen, onClose, onDownload }) => {
             </p>
           </div>
           <button
-            onClick={onClose}
-            className="ml-4 p-2 text-text-secondary hover:text-text hover:bg-border rounded-lg transition-colors"
+              onClick={handleCloseClick}
+              className="flex-shrink-0 p-2 text-text-secondary hover:text-text hover:bg-border rounded-lg transition-colors"
             title="Close"
+              type="button"
           >
             <svg
               className="w-6 h-6"
@@ -109,17 +120,19 @@ const PreviewModal = ({ file, isOpen, onClose, onDownload }) => {
         </div>
 
         {/* Preview Content */}
-        <div className="flex-1 overflow-auto flex items-center justify-center bg-background/50">
+          <div className="flex-1 overflow-auto flex items-center justify-center bg-background/50 p-4 sm:p-6">
           {isLoading ? (
-            <Loader />
+              <div className="flex flex-col items-center gap-4">
+                <Loader />
+                <p className="text-text-secondary">Loading preview...</p>
+              </div>
           ) : canPreview && previewUrl ? (
-            <div className="w-full h-full flex items-center justify-center p-4">
+              <div className="w-full h-full flex items-center justify-center">
               {isPDF ? (
                 <iframe
                   src={previewUrl}
                   title={file.originalFilename}
-                  className="w-full h-full border-0 rounded"
-                  style={{ minHeight: '400px' }}
+                    className="w-full h-full border-0 rounded bg-white"
                 />
               ) : isImage ? (
                 <img
@@ -155,16 +168,18 @@ const PreviewModal = ({ file, isOpen, onClose, onDownload }) => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 p-4 sm:p-6 border-t border-border">
+          <div className="flex items-center justify-end gap-2 p-4 sm:p-6 border-t border-border flex-shrink-0">
           <button
-            onClick={onClose}
+              onClick={handleCloseClick}
             className="px-4 py-2 text-text-secondary hover:bg-border rounded-lg transition-colors text-sm font-medium"
+              type="button"
           >
             Close
           </button>
           <button
-            onClick={() => onDownload()}
+              onClick={handleDownloadClick}
             className="px-4 py-2 bg-lavender text-white rounded-lg hover:bg-lavender/80 transition-colors text-sm font-medium flex items-center gap-2"
+              type="button"
           >
             <svg
               className="w-4 h-4"
