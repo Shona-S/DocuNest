@@ -1,27 +1,18 @@
-import { useState } from 'react';
-import { downloadFile, deleteFile } from '../services/api';
-import { toast } from 'react-toastify';
-import Loader from './Loader';
-import PreviewModal from './PreviewModal';
+import { useState } from "react";
+import { downloadFile, deleteFile } from "../services/api";
+import { toast } from "react-toastify";
+import Loader from "./Loader";
+import PreviewModal from "./PreviewModal";
 
-/**
- * FileCard Component
- * 
- * Displays a single document with:
- * - Filename, category, tags
- * - Download and Delete actions
- * - Preview functionality in modal
- * - PIN prompts for protected files
- * - Loading states for actions
- * - Clean card-based design
- */
 const FileCard = ({ file, onDelete }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
-  const handlePreviewClick = () => {
-    setShowPreview(true);
+  const handlePreviewClick = () => setShowPreview(true);
+
+  const handleModalClose = () => {
+    setShowPreview(false);
   };
 
   const handleDownload = async () => {
@@ -29,64 +20,65 @@ const FileCard = ({ file, onDelete }) => {
       setIsDownloading(true);
       let pin = null;
       if (file.requiresPIN) {
-        pin = window.prompt('Enter PIN to download this file:');
+        pin = window.prompt("Enter PIN to download this file:");
         if (!pin) {
           setIsDownloading(false);
           return;
         }
       }
       await downloadFile(file.id, file.originalFilename, pin);
-      toast.success('File downloaded successfully');
-    } catch (error) {
-      // Error is handled by API interceptor
+      toast.success("File downloaded successfully");
+    } catch {
+      // handled by API interceptor
     } finally {
       setIsDownloading(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(`Are you sure you want to delete "${file.originalFilename}"?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete "${file.originalFilename}"?`
+      )
+    )
       return;
-    }
-
     try {
       setIsDeleting(true);
       await deleteFile(file.id);
-      toast.success('File deleted successfully');
-      if (onDelete) {
-        onDelete(file.id);
-      }
-    } catch (error) {
-      // Error is handled by API interceptor
+      toast.success("File deleted successfully");
+      onDelete?.(file.id);
+    } catch {
+      // handled by API interceptor
     } finally {
       setIsDeleting(false);
     }
   };
 
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    return (
+      Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i]
+    );
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
-  };
 
   const getCategoryColor = (category) => {
     const colors = {
-      Work: 'bg-blue-500/20 text-blue-400',
-      Education: 'bg-green-500/20 text-green-400',
-      ID: 'bg-yellow-500/20 text-yellow-400',
-      Certificate: 'bg-purple-500/20 text-purple-400',
-      Resume: 'bg-pink-500/20 text-pink-400',
-      Other: 'bg-gray-500/20 text-gray-400',
+      Work: "bg-blue-500/20 text-blue-400",
+      Education: "bg-green-500/20 text-green-400",
+      ID: "bg-yellow-500/20 text-yellow-400",
+      Certificate: "bg-purple-500/20 text-purple-400",
+      Resume: "bg-pink-500/20 text-pink-400",
+      Other: "bg-gray-500/20 text-gray-400",
     };
     return colors[category] || colors.Other;
   };
@@ -94,42 +86,46 @@ const FileCard = ({ file, onDelete }) => {
   return (
     <div className="card card-hover p-4 sm:p-6">
       <div className="flex items-start justify-between gap-3 sm:gap-4">
+        {/* File info */}
         <div className="flex-1 min-w-0">
-          {/* Filename */}
-          <button
-            onClick={handlePreviewClick}
-            disabled={isDownloading || isDeleting}
-            className="text-base sm:text-lg font-medium text-lavender hover:underline mb-2 text-left disabled:opacity-50 cursor-pointer break-words"
-            title={file.originalFilename}
-            type="button"
-            style={{
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {file.originalFilename}
-          </button>
+          <div className="flex items-center min-w-0">
+            <button
+              onClick={handlePreviewClick}
+              disabled={isDownloading || isDeleting}
+              className="text-base sm:text-lg font-medium text-lavender hover:underline mb-2 text-left disabled:opacity-50 cursor-pointer block"
+              title={file.originalFilename}
+              type="button"
+              style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '280px',
+              }}
+            >
+              {file.originalFilename}
+            </button>
+          </div>
 
           {/* Category and Tags */}
           <div className="flex items-center gap-2 mb-2 sm:mb-3 flex-wrap">
-            <span className={`px-2 py-1 rounded-md text-xs font-medium ${getCategoryColor(file.category)}`}>
+            <span
+              className={`px-2 py-1 rounded-md text-xs font-medium ${getCategoryColor(
+                file.category
+              )}`}
+            >
               {file.category}
             </span>
-            {file.tags && file.tags.length > 0 && (
-              <div className="flex gap-1 flex-wrap">
-                {file.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="px-2 py-1 rounded-md text-xs bg-border text-text-secondary"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
+            {file.tags?.length > 0 &&
+              file.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="px-2 py-1 rounded-md text-xs bg-border text-text-secondary"
+                >
+                  #{tag}
+                </span>
+              ))}
           </div>
 
           {/* File Info */}
@@ -172,6 +168,7 @@ const FileCard = ({ file, onDelete }) => {
               </svg>
             )}
           </button>
+
           <button
             onClick={handleDelete}
             disabled={isDownloading || isDeleting}
@@ -199,15 +196,18 @@ const FileCard = ({ file, onDelete }) => {
         </div>
       </div>
 
-      <PreviewModal
-        file={file}
-        isOpen={showPreview}
-        onClose={() => setShowPreview(false)}
-        onDownload={handleDownload}
-      />
+      {/* Modal */}
+      {showPreview && (
+        <PreviewModal
+          key={file.id}
+          file={file}
+          isOpen={showPreview}
+          onClose={handleModalClose}
+          onDownload={handleDownload}
+        />
+      )}
     </div>
   );
 };
 
 export default FileCard;
-
