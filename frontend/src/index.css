@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-text font-sans antialiased;
+  }
+}
+
+@layer components {
+  /* Button Styles */
+  .btn-primary {
+    @apply bg-lavender text-background font-medium px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg 
+           hover:opacity-90 active:opacity-80 transition-all duration-200 
+           disabled:opacity-50 disabled:cursor-not-allowed
+           min-h-[44px] touch-manipulation;
+  }
+  
+  .btn-secondary {
+    @apply bg-surface text-text border border-border px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg 
+           hover:bg-border active:bg-border/80 transition-all duration-200
+           min-h-[44px] touch-manipulation;
+  }
+  
+  .btn-danger {
+    @apply bg-red-600 text-white px-4 py-2 rounded-lg 
+           hover:bg-red-700 active:bg-red-800 transition-all duration-200
+           min-h-[44px] touch-manipulation;
+  }
+  
+  /* Input Styles */
+  .input-field {
+    @apply w-full bg-surface border border-border rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 
+           text-sm sm:text-base text-text placeholder-text-secondary focus:outline-none 
+           focus:ring-2 focus:ring-lavender focus:border-transparent 
+           transition-all duration-200 min-h-[44px];
+  }
+  
+  /* Card Styles */
+  .card {
+    @apply bg-surface border border-border rounded-xl p-4 sm:p-6 
+           transition-all duration-200;
+  }
+  
+  .card-hover {
+    @apply hover:border-lavender/30 hover:shadow-lg hover:shadow-lavender/5
+           active:scale-[0.99] sm:active:scale-100;
+  }
+  
+  /* Touch-friendly improvements */
+  @media (max-width: 640px) {
+    button, a, input[type="button"], input[type="submit"] {
+      -webkit-tap-highlight-color: transparent;
+    }
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-surface;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-lavender/30;
+}
+
