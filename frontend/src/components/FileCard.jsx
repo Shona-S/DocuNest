@@ -2,18 +2,14 @@ import { useState } from "react";
 import { downloadFile, deleteFile } from "../services/api";
 import { toast } from "react-toastify";
 import Loader from "./Loader";
-import PreviewModal from "./PreviewModal";
+import { usePreview } from '../context/PreviewContext';
 
 const FileCard = ({ file, onDelete }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  const { openPreview } = usePreview();
 
-  const handlePreviewClick = () => setShowPreview(true);
-
-  const handleModalClose = () => {
-    setShowPreview(false);
-  };
+  const handlePreviewClick = () => openPreview(file);
 
   const handleDownload = async () => {
     try {
@@ -196,16 +192,7 @@ const FileCard = ({ file, onDelete }) => {
         </div>
       </div>
 
-      {/* Modal */}
-      {showPreview && (
-        <PreviewModal
-          key={file.id}
-          file={file}
-          isOpen={showPreview}
-          onClose={handleModalClose}
-          onDownload={handleDownload}
-        />
-      )}
+      {/* Modal is handled by root-level PreviewProvider */}
     </div>
   );
 };
