@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadFile } from '../services/api';
 import { toast } from 'react-toastify';
@@ -28,6 +28,8 @@ const Upload = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const pinRef = useRef(null);
 
   const categories = ['Work', 'Education', 'ID', 'Certificate', 'Resume', 'Other'];
 
@@ -63,7 +65,31 @@ const Upload = () => {
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
     });
+    // If user toggles PIN requirement on mobile, focus the PIN input to prompt entry
+    if (name === 'requiresPIN' && checked && typeof window !== 'undefined') {
+      // small timeout to allow the input to render before focusing
+      setTimeout(() => {
+        try {
+          pinRef.current?.focus?.();
+        } catch (err) {
+          // ignore focus failures
+        }
+      }, 50);
+    }
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 640px)');
+    const handle = () => setIsMobile(mq.matches);
+    handle();
+    if (mq.addEventListener) mq.addEventListener('change', handle);
+    else mq.addListener(handle);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', handle);
+      else mq.removeListener(handle);
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -89,7 +115,15 @@ const Upload = () => {
       toast.error('File size must be less than 50MB');
       return;
     }
-
+    
+    // Mobile-only: require PIN entry when PIN protection is enabled
+    if (formData.requiresPIN && isMobile) {
+      const pin = (formData.pin || '').trim();
+      if (!/^[0-9]{4,6}$/.test(pin)) {
+        toast.error('Please enter a 4-6 digit PIN for PIN-protected files on mobile');
+        return;
+      }
+    }
     setIsUploading(true);
     setUploadProgress(0);
 
@@ -286,7 +320,9 @@ const Upload = () => {
               <div>
                 <label htmlFor="pin" className="block text-sm font-medium text-text mb-2">PIN (4-6 digits)</label>
                 <input
-                  type="text"
+                  ref={pinRef}
+                  type={isMobile ? 'tel' : 'text'}
+                  {...(isMobile ? { inputMode: 'numeric', pattern: '[0-9]{4,6}' } : {})}
                   id="pin"
                   name="pin"
                   value={formData.pin}
