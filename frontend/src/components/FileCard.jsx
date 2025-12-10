@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { downloadFile, deleteFile } from '../services/api';
+import { downloadFile, deleteFile, fetchFileBlob } from '../services/api';
 import { toast } from 'react-toastify';
 import Loader from './Loader';
 
@@ -9,12 +9,40 @@ import Loader from './Loader';
  * Displays a single document with:
  * - Filename, category, tags
  * - Download and Delete actions
+ * - Preview functionality
+ * - PIN prompts for protected files
  * - Loading states for actions
  * - Clean card-based design
  */
 const FileCard = ({ file, onDelete }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const handlePreview = async () => {
+    try {
+      setIsDownloading(true);
+      let pin = null;
+      if (file.requiresPIN) {
+        pin = window.prompt('Enter PIN to preview this file:');
+        if (!pin) {
+          setIsDownloading(false);
+          return;
+        }
+      }
+      const blob = await fetchFileBlob(file.id, pin);
+      const fileType = file.originalFilename.split('.').pop().toLowerCase();
+      const url = window.URL.createObjectURL(blob);
+      if (['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
+        window.open(url, '_blank');
+      } else {
+        toast.info('Preview not available for this file type');
+      }
+    } catch (error) {
+      // Error is handled by API interceptor
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleDownload = async () => {
     try {
@@ -23,40 +51,15 @@ const FileCard = ({ file, onDelete }) => {
       if (file.requiresPIN) {
         pin = window.prompt('Enter PIN to download this file:');
         if (!pin) {
-          toast.error('PIN is required to download this file');
           setIsDownloading(false);
           return;
         }
       }
-
       await downloadFile(file.id, file.originalFilename, pin);
       toast.success('File downloaded successfully');
     } catch (error) {
       // Error is handled by API interceptor
     } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  // Preview file in new tab (PDF or images will display in-browser)
-  const handlePreview = async () => {
-    try {
-      let pin = null;
-      if (file.requiresPIN) {
-        pin = window.prompt('Enter PIN to preview this file:');
-        if (!pin) {
-          toast.error('PIN is required to preview this file');
-          return;
-        }
-      }
-
-      setIsDownloading(true);
-      const blob = await fetchFileBlob(file.id, pin);
-      const url = window.URL.createObjectURL(new Blob([blob]));
-      window.open(url, '_blank');
-      // Note: browser will decide how to render (PDF/image)
-      setIsDownloading(false);
-    } catch (error) {
       setIsDownloading(false);
     }
   };
@@ -113,11 +116,14 @@ const FileCard = ({ file, onDelete }) => {
       <div className="flex items-start justify-between gap-3 sm:gap-4">
         <div className="flex-1 min-w-0">
           {/* Filename */}
-          <h3 className="text-base sm:text-lg font-medium text-text truncate mb-2">
-            <button onClick={handlePreview} className="text-left w-full">
-              {file.originalFilename}
-            </button>
-          </h3>
+          <button
+            onClick={handlePreview}
+            disabled={isDownloading || isDeleting}
+            className="text-base sm:text-lg font-medium text-lavender hover:underline truncate mb-2 text-left disabled:opacity-50 cursor-pointer"
+            title="Click to preview"
+          >
+            {file.originalFilename}
+          </button>
 
           {/* Category and Tags */}
           <div className="flex items-center gap-2 mb-2 sm:mb-3 flex-wrap">

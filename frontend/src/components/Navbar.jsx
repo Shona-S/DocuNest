@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import iconSvg from '../assets/icon.svg';
 
 /**
  * Navbar Component
@@ -37,7 +38,7 @@ const Navbar = () => {
             onClick={() => setIsMenuOpen(false)}
           >
             <img 
-              src={require('../assets/icon.svg').default} 
+              src={iconSvg} 
               alt="DocuNest" 
               className="w-5 h-5 sm:w-6 sm:h-6"
             />

@@ -7,13 +7,8 @@ import { toast } from 'react-toastify';
  * Automatically handles JWT, errors, redirects and toasts.
  */
 
-// Use Vite environment variable when available (VITE_API_BASE_URL)
-const apiBase = import.meta.env.VITE_API_BASE_URL
-  ? `${import.meta.env.VITE_API_BASE_URL}/api`
-  : 'http://localhost:5000/api';
-
 const api = axios.create({
-  baseURL: apiBase,
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -130,27 +125,6 @@ export const getFile = async (fileId) => {
   return response.data;
 };
 
-export const downloadFile = async (fileId, filename, pin = null) => {
-  const params = pin ? { pin } : {};
-
-  const response = await api.get(`/files/${fileId}/download`, {
-    params,
-    responseType: 'blob',
-  });
-
-  const url = window.URL.createObjectURL(new Blob([response.data]));
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
-
-  return response.data;
-};
-
-// Fetch file as blob without triggering a download (used for preview)
 export const fetchFileBlob = async (fileId, pin = null) => {
   const params = pin ? { pin } : {};
   const response = await api.get(`/files/${fileId}/download`, {
@@ -158,6 +132,19 @@ export const fetchFileBlob = async (fileId, pin = null) => {
     responseType: 'blob',
   });
   return response.data;
+};
+
+export const downloadFile = async (fileId, filename, pin = null) => {
+  const blob = await fetchFileBlob(fileId, pin);
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+  return blob;
 };
 
 export const deleteFile = async (fileId) => {
