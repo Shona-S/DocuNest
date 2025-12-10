@@ -98,6 +98,18 @@ const Upload = () => {
       uploadFormData.append('tags', formData.tags);
       uploadFormData.append('requiresPIN', formData.requiresPIN);
 
+      // If PIN protection is enabled, prompt the user for a 4-6 digit PIN
+      if (formData.requiresPIN) {
+        const pin = window.prompt('Enter a 4-6 digit PIN to protect this document:');
+        if (!pin || !/^[0-9]{4,6}$/.test(pin)) {
+          toast.error('A valid 4-6 digit PIN is required when PIN protection is enabled.');
+          setIsUploading(false);
+          setUploadProgress(0);
+          return;
+        }
+        uploadFormData.append('pin', pin);
+      }
+
       await uploadFile(uploadFormData, (progress) => {
         setUploadProgress(progress);
       });

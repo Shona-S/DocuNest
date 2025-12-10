@@ -7,8 +7,13 @@ import { toast } from 'react-toastify';
  * Automatically handles JWT, errors, redirects and toasts.
  */
 
+// Use Vite environment variable when available (VITE_API_BASE_URL)
+const apiBase = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/api`
+  : 'http://localhost:5000/api';
+
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: apiBase,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -142,6 +147,16 @@ export const downloadFile = async (fileId, filename, pin = null) => {
   link.remove();
   window.URL.revokeObjectURL(url);
 
+  return response.data;
+};
+
+// Fetch file as blob without triggering a download (used for preview)
+export const fetchFileBlob = async (fileId, pin = null) => {
+  const params = pin ? { pin } : {};
+  const response = await api.get(`/files/${fileId}/download`, {
+    params,
+    responseType: 'blob',
+  });
   return response.data;
 };
 

@@ -19,11 +19,44 @@ const FileCard = ({ file, onDelete }) => {
   const handleDownload = async () => {
     try {
       setIsDownloading(true);
-      await downloadFile(file.id, file.originalFilename);
+      let pin = null;
+      if (file.requiresPIN) {
+        pin = window.prompt('Enter PIN to download this file:');
+        if (!pin) {
+          toast.error('PIN is required to download this file');
+          setIsDownloading(false);
+          return;
+        }
+      }
+
+      await downloadFile(file.id, file.originalFilename, pin);
       toast.success('File downloaded successfully');
     } catch (error) {
       // Error is handled by API interceptor
     } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Preview file in new tab (PDF or images will display in-browser)
+  const handlePreview = async () => {
+    try {
+      let pin = null;
+      if (file.requiresPIN) {
+        pin = window.prompt('Enter PIN to preview this file:');
+        if (!pin) {
+          toast.error('PIN is required to preview this file');
+          return;
+        }
+      }
+
+      setIsDownloading(true);
+      const blob = await fetchFileBlob(file.id, pin);
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      window.open(url, '_blank');
+      // Note: browser will decide how to render (PDF/image)
+      setIsDownloading(false);
+    } catch (error) {
       setIsDownloading(false);
     }
   };
@@ -81,7 +114,9 @@ const FileCard = ({ file, onDelete }) => {
         <div className="flex-1 min-w-0">
           {/* Filename */}
           <h3 className="text-base sm:text-lg font-medium text-text truncate mb-2">
-            {file.originalFilename}
+            <button onClick={handlePreview} className="text-left w-full">
+              {file.originalFilename}
+            </button>
           </h3>
 
           {/* Category and Tags */}

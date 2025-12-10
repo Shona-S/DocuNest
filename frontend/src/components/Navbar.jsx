@@ -37,7 +37,7 @@ const Navbar = () => {
             onClick={() => setIsMenuOpen(false)}
           >
             <img 
-              src="/src/assets/icon.svg" 
+              src={require('../assets/icon.svg').default} 
               alt="DocuNest" 
               className="w-5 h-5 sm:w-6 sm:h-6"
             />
