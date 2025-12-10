@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import iconSvg from '../assets/icon.svg';
+import { getCurrentUser } from '../services/api';
 
 /**
  * Navbar Component
@@ -26,6 +27,21 @@ const Navbar = () => {
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await getCurrentUser();
+        if (mounted) {
+          setUser(res.data.user);
+        }
+      } catch (err) {
+        // ignore, handled by interceptor
+      }
+    })();
+    return () => { mounted = false };
+  }, []);
 
   return (
     <nav className="bg-surface border-b border-border sticky top-0 z-50">
@@ -60,6 +76,15 @@ const Navbar = () => {
               className="text-text-secondary hover:text-lavender transition-colors duration-200"
             >
               Upload
+            </Link>
+            <Link
+              to="/profile"
+              className="flex items-center gap-2 text-text-secondary hover:text-lavender transition-colors duration-200"
+            >
+              <div className="w-7 h-7 rounded-full bg-lavender text-white flex items-center justify-center text-xs font-semibold">
+                {user?.name ? user.name.split(' ').map(n => n[0]).slice(0,2).join('') : 'U'}
+              </div>
+              <span className="hidden sm:inline">Profile</span>
             </Link>
             <button
               onClick={handleLogout}
@@ -116,6 +141,13 @@ const Navbar = () => {
               className="block px-4 py-2 text-text-secondary hover:text-lavender hover:bg-border rounded-lg transition-colors duration-200"
             >
               Upload
+            </Link>
+            <Link
+              to="/profile"
+              onClick={() => setIsMenuOpen(false)}
+              className="block px-4 py-2 text-text-secondary hover:text-lavender hover:bg-border rounded-lg transition-colors duration-200"
+            >
+              Profile
             </Link>
             <button
               onClick={() => {

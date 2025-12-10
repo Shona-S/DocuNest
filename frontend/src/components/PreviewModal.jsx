@@ -101,12 +101,13 @@ const PreviewModal = ({ file, isOpen, onClose, onDownload }) => {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#2a2535] bg-[#1b1622]/95 sticky top-0 z-20">
           <div className="flex-1 min-w-0">
-            <h2
-              className="text-white text-lg font-semibold truncate max-w-[240px] sm:max-w-[400px]"
-              title={file.originalFilename}
-            >
-              {file.originalFilename}
-            </h2>
+              <h2
+                className="text-white text-lg font-semibold truncate max-w-[240px] sm:max-w-[400px]"
+                title={file.name || file.originalFilename}
+              >
+                {file.name || file.originalFilename}
+              </h2>
+              const fileType = (file.originalFilename || file.name || '').split('.').pop().toLowerCase();
             <p className="text-sm text-gray-400">
               {canPreview ? "Preview" : "No preview available"}
             </p>

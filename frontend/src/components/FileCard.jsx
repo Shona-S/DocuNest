@@ -89,7 +89,7 @@ const FileCard = ({ file, onDelete }) => {
               onClick={handlePreviewClick}
               disabled={isDownloading || isDeleting}
               className="text-base sm:text-lg font-medium text-lavender hover:underline mb-2 text-left disabled:opacity-50 cursor-pointer block"
-              title={file.originalFilename}
+              title={file.name || file.originalFilename}
               type="button"
               style={{
                 display: '-webkit-box',
@@ -100,7 +100,7 @@ const FileCard = ({ file, onDelete }) => {
                 maxWidth: '280px',
               }}
             >
-              {file.originalFilename}
+              {file.name || file.originalFilename}
             </button>
           </div>
 
