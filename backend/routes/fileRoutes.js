@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { Op } from 'sequelize';
 import { authenticate, verifyPIN } from '../middleware/authMiddleware.js';
 import Document from '../models/documentModel.js';
+import User from '../models/userModel.js';
 import { encryptFile } from '../utils/encryptFile.js';
 import { decryptFile } from '../utils/decryptFile.js';
 import { AppError } from '../middleware/errorHandler.js';
@@ -374,8 +375,25 @@ router.get('/:id/download', authenticate, async (req, res, next) => {
         });
       }
 
-      // Verify PIN (you can add PIN verification logic here)
-      // For now, we'll skip this and let the frontend handle it
+      // Verify PIN against user's stored PIN hash
+      const user = await User.findByPk(req.userId, {
+        attributes: { include: ['pinHash'] },
+      });
+
+      if (!user || !user.pinHash) {
+        return res.status(400).json({
+          success: false,
+          message: 'PIN not set for this user',
+        });
+      }
+
+      const isPINValid = await user.comparePIN(pin);
+      if (!isPINValid) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid PIN',
+        });
+      }
     }
 
     // Read encrypted file from disk
