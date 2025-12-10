@@ -17,6 +17,7 @@ import { getCurrentUser } from '../services/api';
 const Navbar = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
