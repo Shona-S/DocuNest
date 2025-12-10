@@ -392,6 +392,7 @@ router.get('/:id/download', authenticate, async (req, res, next) => {
     if (document.requiresPIN) {
       const { pin } = req.query;
       if (!pin) {
+        console.log(`[PIN] User ${req.userId} attempted download of ${document.originalFilename} without PIN`);
         return res.status(403).json({
           success: false,
           message: 'PIN required to download this file',
@@ -402,19 +403,23 @@ router.get('/:id/download', authenticate, async (req, res, next) => {
       if (document.pinHash) {
         const match = await bcrypt.compare(pin, document.pinHash);
         if (!match) {
+          console.log(`[PIN] User ${req.userId} provided invalid PIN for file ${document.originalFilename}`);
           return res.status(403).json({
             success: false,
             message: 'Invalid PIN for this file',
           });
         }
+        console.log(`[PIN] User ${req.userId} provided correct PIN for file ${document.originalFilename}`);
       } else {
         // Fallback: check user's PIN (legacy behavior)
+        console.log(`[PIN] No per-file PIN hash found, checking user PIN for file ${document.originalFilename}`);
         const user = await User.findByPk(req.userId);
         if (!user) {
           return res.status(403).json({ success: false, message: 'User not found' });
         }
         const ok = await user.comparePIN(pin);
         if (!ok) {
+          console.log(`[PIN] User ${req.userId} provided invalid user PIN`);
           return res.status(403).json({
             success: false,
             message: 'Invalid PIN',

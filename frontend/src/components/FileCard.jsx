@@ -15,17 +15,33 @@ const FileCard = ({ file, onDelete }) => {
     try {
       setIsDownloading(true);
       let pin = null;
+      
       if (file.requiresPIN) {
-        pin = window.prompt("Enter PIN to download this file:");
-        if (!pin) {
+        // PIN is required - show modal/input
+        pin = window.prompt("Enter PIN to download this file:", "");
+        
+        // User cancelled
+        if (pin === null) {
+          toast.info("Download cancelled");
           setIsDownloading(false);
           return;
         }
+        
+        // Validate PIN is not empty
+        if (!pin || pin.trim() === "") {
+          toast.error("PIN cannot be empty");
+          setIsDownloading(false);
+          return;
+        }
+        
+        console.log('[DEBUG] PIN entered, attempting download with PIN');
       }
+      
       await downloadFile(file.id, file.originalFilename, pin);
       toast.success("File downloaded successfully");
-    } catch {
+    } catch (error) {
       // handled by API interceptor
+      console.error('[ERROR] Download failed:', error);
     } finally {
       setIsDownloading(false);
     }

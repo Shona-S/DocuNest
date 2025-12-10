@@ -20,9 +20,28 @@ const PreviewModal = ({ file, isOpen, onClose, onDownload }) => {
       try {
         setIsLoading(true);
         let pin = null;
+        
         if (file.requiresPIN) {
-          pin = window.prompt("Enter PIN to preview this file:");
-          if (!pin || cancelled) return handleClose();
+          pin = window.prompt("Enter PIN to preview this file:", "");
+          
+          // User cancelled
+          if (pin === null) {
+            if (!cancelled) {
+              handleClose();
+            }
+            return;
+          }
+          
+          // PIN is empty
+          if (!pin || pin.trim() === "") {
+            if (!cancelled) {
+              alert("PIN cannot be empty. Preview cancelled.");
+              handleClose();
+            }
+            return;
+          }
+          
+          console.log('[DEBUG] PIN entered, loading preview with PIN');
         }
 
         const blob = await fetchFileBlob(file.id, pin);
@@ -30,8 +49,11 @@ const PreviewModal = ({ file, isOpen, onClose, onDownload }) => {
         const url = URL.createObjectURL(blob);
         setPreviewBlob(blob);
         setPreviewUrl(url);
-      } catch {
-        handleClose();
+      } catch (error) {
+        console.error('[ERROR] Preview failed:', error);
+        if (!cancelled) {
+          handleClose();
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -107,7 +129,6 @@ const PreviewModal = ({ file, isOpen, onClose, onDownload }) => {
               >
                 {file.name || file.originalFilename}
               </h2>
-              const fileType = (file.originalFilename || file.name || '').split('.').pop().toLowerCase();
             <p className="text-sm text-gray-400">
               {canPreview ? "Preview" : "No preview available"}
             </p>
