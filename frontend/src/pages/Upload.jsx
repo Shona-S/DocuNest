@@ -22,6 +22,8 @@ const Upload = () => {
     category: 'Other',
     tags: '',
     requiresPIN: false,
+    displayName: '',
+    pin: '',
   });
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -96,19 +98,15 @@ const Upload = () => {
       uploadFormData.append('file', formData.file);
       uploadFormData.append('category', formData.category);
       uploadFormData.append('tags', formData.tags);
-      uploadFormData.append('requiresPIN', formData.requiresPIN);
-
-      // If PIN protection is enabled, prompt the user for a 4-6 digit PIN
-      if (formData.requiresPIN) {
-        const pin = window.prompt('Enter a 4-6 digit PIN to protect this document:');
-        if (!pin || !/^[0-9]{4,6}$/.test(pin)) {
-          toast.error('A valid 4-6 digit PIN is required when PIN protection is enabled.');
-          setIsUploading(false);
-          setUploadProgress(0);
-          return;
-        }
-        uploadFormData.append('pin', pin);
+      // Optional display name for user-friendly title
+      if (formData.displayName && formData.displayName.trim()) {
+        uploadFormData.append('name', formData.displayName.trim());
       }
+      // Optional per-file PIN
+      if (formData.requiresPIN && formData.pin) {
+        uploadFormData.append('pin', formData.pin);
+      }
+      uploadFormData.append('requiresPIN', formData.requiresPIN);
 
       await uploadFile(uploadFormData, (progress) => {
         setUploadProgress(progress);
@@ -236,6 +234,21 @@ const Upload = () => {
                 ))}
               </select>
             </div>
+            {/* Display Name (optional) */}
+            <div>
+              <label htmlFor="displayName" className="block text-sm font-medium text-text mb-2">
+                Display Name (optional)
+              </label>
+              <input
+                type="text"
+                id="displayName"
+                name="displayName"
+                value={formData.displayName}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="Enter a friendly name for this file"
+              />
+            </div>
 
             {/* Tags Input */}
             <div>
@@ -267,6 +280,23 @@ const Upload = () => {
                 Require PIN to access this file
               </label>
             </div>
+
+            {/* PIN Input (shown when requiresPIN) */}
+            {formData.requiresPIN && (
+              <div>
+                <label htmlFor="pin" className="block text-sm font-medium text-text mb-2">PIN (4-6 digits)</label>
+                <input
+                  type="text"
+                  id="pin"
+                  name="pin"
+                  value={formData.pin}
+                  onChange={handleChange}
+                  className="input-field"
+                  placeholder="Enter a 4-6 digit PIN"
+                  maxLength={6}
+                />
+              </div>
+            )}
 
             {/* Upload Progress */}
             {isUploading && (

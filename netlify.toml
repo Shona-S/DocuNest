@@ -8,3 +8,10 @@
   NETLIFY_BUILD_DEBUG = "true"
   # Node version hint (Netlify will also respect .nvmrc or package.json engines)
   NODE_VERSION = "18"
+  # API Base URL for production
+  VITE_API_BASE_URL = "https://docunest-backend.onrender.com/api"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

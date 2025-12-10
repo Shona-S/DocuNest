@@ -5,8 +5,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Op } from 'sequelize';
 import { authenticate, verifyPIN } from '../middleware/authMiddleware.js';
-import Document from '../models/documentModel.js';
+import bcrypt from 'bcryptjs';
 import User from '../models/userModel.js';
+import Document from '../models/documentModel.js';
 import { encryptFile } from '../utils/encryptFile.js';
 import { decryptFile } from '../utils/decryptFile.js';
 import { AppError } from '../middleware/errorHandler.js';
@@ -133,7 +134,7 @@ router.post('/upload', authenticate, upload.single('file'), async (req, res, nex
       });
     }
 
-    const { category = 'Other', tags = [], requiresPIN = false } = req.body;
+    const { category = 'Other', tags = [], requiresPIN = false, name = null, pin = null } = req.body;
     const userId = req.userId;
 
     // Validate category
@@ -165,10 +166,18 @@ router.post('/upload', authenticate, upload.single('file'), async (req, res, nex
 
     // Create document record in database
     // Sequelize: create method works similarly, but uses id instead of _id
+    // If a per-file PIN was provided, hash it before storing
+    let hashedPin = null;
+    if ((requiresPIN === 'true' || requiresPIN === true) && pin) {
+      const salt = await bcrypt.genSalt(12);
+      hashedPin = await bcrypt.hash(pin, salt);
+    }
+
     const document = await Document.create({
       userId,
       filename: uniqueFilename,
       originalFilename: req.file.originalname,
+      displayName: name || null,
       fileType,
       fileSize: req.file.size,
       category,
@@ -177,6 +186,7 @@ router.post('/upload', authenticate, upload.single('file'), async (req, res, nex
       encryptedIV,
       filePath: path.relative(path.join(__dirname, '../'), filePath), // Store relative path
       requiresPIN: requiresPIN === 'true' || requiresPIN === true,
+      pinHash: hashedPin,
     });
 
     // Log upload activity (you can extend this to an Activity model)
@@ -189,6 +199,7 @@ router.post('/upload', authenticate, upload.single('file'), async (req, res, nex
         document: {
           id: document.id,
           filename: document.originalFilename,
+          name: document.displayName || document.originalFilename,
           category: document.category,
           tags: document.tags, // Will be converted to array by getter
           fileSize: document.fileSize,
@@ -225,15 +236,24 @@ router.get('/', authenticate, async (req, res, next) => {
 
     const documents = await Document.findAll({
       where: whereClause,
-      attributes: { exclude: ['encryptedKey', 'encryptedIV', 'filePath'] }, // Don't expose sensitive data
+      attributes: { exclude: ['encryptedKey', 'encryptedIV', 'filePath', 'pinHash'] }, // Don't expose sensitive data
       order: [['uploadedAt', 'DESC']], // Sequelize order syntax
+    });
+
+    // Map documents to include a `name` property (displayName fallback)
+    const docs = documents.map((d) => {
+      const plain = d.get({ plain: true });
+      return {
+        ...plain,
+        name: plain.displayName || plain.originalFilename,
+      };
     });
 
     res.json({
       success: true,
-      count: documents.length,
+      count: docs.length,
       data: {
-        documents,
+        documents: docs,
       },
     });
   } catch (error) {
@@ -285,7 +305,7 @@ router.get('/:id', authenticate, async (req, res, next) => {
         id: req.params.id,
         userId: req.userId, // Ensure user owns the file
       },
-      attributes: { exclude: ['encryptedKey', 'encryptedIV', 'filePath'] },
+      attributes: { exclude: ['encryptedKey', 'encryptedIV', 'filePath', 'pinHash'] },
     });
 
     if (!document) {
@@ -295,10 +315,13 @@ router.get('/:id', authenticate, async (req, res, next) => {
       });
     }
 
+    const plain = document.get({ plain: true });
+    plain.name = plain.displayName || plain.originalFilename;
+
     res.json({
       success: true,
       data: {
-        document,
+        document: plain,
       },
     });
   } catch (error) {
@@ -375,24 +398,28 @@ router.get('/:id/download', authenticate, async (req, res, next) => {
         });
       }
 
-      // Verify PIN against user's stored PIN hash
-      const user = await User.findByPk(req.userId, {
-        attributes: { include: ['pinHash'] },
-      });
-
-      if (!user || !user.pinHash) {
-        return res.status(400).json({
-          success: false,
-          message: 'PIN not set for this user',
-        });
-      }
-
-      const isPINValid = await user.comparePIN(pin);
-      if (!isPINValid) {
-        return res.status(401).json({
-          success: false,
-          message: 'Invalid PIN',
-        });
+      // If a per-file PIN hash exists, verify against it
+      if (document.pinHash) {
+        const match = await bcrypt.compare(pin, document.pinHash);
+        if (!match) {
+          return res.status(403).json({
+            success: false,
+            message: 'Invalid PIN for this file',
+          });
+        }
+      } else {
+        // Fallback: check user's PIN (legacy behavior)
+        const user = await User.findByPk(req.userId);
+        if (!user) {
+          return res.status(403).json({ success: false, message: 'User not found' });
+        }
+        const ok = await user.comparePIN(pin);
+        if (!ok) {
+          return res.status(403).json({
+            success: false,
+            message: 'Invalid PIN',
+          });
+        }
       }
     }
 

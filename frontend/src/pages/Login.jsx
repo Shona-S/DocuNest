@@ -30,10 +30,22 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate fields
+    if (!formData.email || !formData.password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const response = await login(formData);
+      
+      if (!response.data || !response.data.token) {
+        toast.error('Invalid response from server');
+        return;
+      }
       
       // Store JWT token
       localStorage.setItem('token', response.data.token);
@@ -41,7 +53,8 @@ const Login = () => {
       toast.success('Login successful!');
       navigate('/dashboard');
     } catch (error) {
-      // Error is handled by API interceptor
+      // Error is handled by API interceptor, but we can add extra logging
+      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }

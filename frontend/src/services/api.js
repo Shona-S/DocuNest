@@ -7,12 +7,33 @@ import { toast } from 'react-toastify';
  * Automatically handles JWT, errors, redirects and toasts.
  */
 
+// Determine API base URL based on environment
+const getApiBaseURL = () => {
+  // If VITE_API_BASE_URL is set, use it (from .env files)
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  
+  // Development fallback
+  if (import.meta.env.DEV) {
+    return 'http://localhost:5000/api';
+  }
+  
+  // Production fallback - use relative path for same-origin requests
+  return '/api';
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  baseURL: getApiBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Log API base URL in development
+if (import.meta.env.DEV) {
+  console.log('✅ API Base URL:', api.defaults.baseURL);
+}
 
 /* ============================================================
    REQUEST INTERCEPTOR – attach JWT token                         
@@ -44,6 +65,11 @@ api.interceptors.response.use(
       // Normalize URL (full URL or relative)
       const endpoint = requestUrl.replace(api.defaults.baseURL, '');
 
+      // Log errors in development
+      if (import.meta.env.DEV) {
+        console.error(`❌ API Error [${status}] ${endpoint}:`, error.response.data);
+      }
+
       /* -----------------------------------------
          HANDLE 401 UNAUTHORIZED
       ------------------------------------------ */
@@ -63,8 +89,12 @@ api.interceptors.response.use(
       toast.error(message);
       
     } else if (error.request) {
-      toast.error('Network error. Please check your internet connection.');
+      // No response received (network error or timeout)
+      console.error('❌ Network Error:', error.request);
+      toast.error('Network error. Please check your internet connection and backend server status.');
     } else {
+      // Request setup error
+      console.error('❌ Request Error:', error.message);
       toast.error('Unexpected error occurred');
     }
 
@@ -93,6 +123,12 @@ export const getCurrentUser = async () => {
 
 export const setPIN = async (pin) => {
   const response = await api.post('/auth/set-pin', { pin });
+  return response.data;
+};
+
+export const updateProfile = async (profileData) => {
+  // Sends profile updates to backend. Endpoint may be adjusted to match backend.
+  const response = await api.put('/auth/profile', profileData);
   return response.data;
 };
 

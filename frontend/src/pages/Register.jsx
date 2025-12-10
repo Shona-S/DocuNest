@@ -48,6 +48,17 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Validate all fields
+    if (!formData.name || !formData.email || !formData.password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    if (formData.name.length < 3) {
+      toast.error('Name must be at least 3 characters');
+      return;
+    }
+
     if (passwordValidation && !passwordValidation.isValid) {
       toast.error('Please fix password requirements');
       return;
@@ -56,11 +67,18 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      await register(formData);
+      const response = await register(formData);
+      
+      if (!response || !response.data) {
+        toast.error('Invalid response from server');
+        return;
+      }
+      
       toast.success('Account created successfully! Please sign in.');
       navigate('/login');
     } catch (error) {
       // Error is handled by API interceptor
+      console.error('Register error:', error);
     } finally {
       setIsLoading(false);
     }

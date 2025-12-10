@@ -308,6 +308,60 @@ router.get('/me', authenticate, async (req, res, next) => {
 });
 
 /**
+ * @route   PUT /api/auth/profile
+ * @desc    Update current user's profile
+ * @access  Private
+ */
+router.put('/profile', authenticate, async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const {
+      name,
+      email,
+      mobile,
+      motherMobile,
+      fatherMobile,
+      address,
+      dob,
+      gender,
+      customFields,
+    } = req.body;
+
+    // Basic validations
+    if (email && email !== user.email) {
+      const exists = await User.findOne({ where: { email } });
+      if (exists) {
+        return res.status(400).json({ success: false, message: 'Email already in use' });
+      }
+    }
+
+    // Update fields if present
+    if (name !== undefined) user.name = name;
+    if (email !== undefined) user.email = email;
+    if (mobile !== undefined) user.mobile = mobile;
+    if (motherMobile !== undefined) user.motherMobile = motherMobile;
+    if (fatherMobile !== undefined) user.fatherMobile = fatherMobile;
+    if (address !== undefined) user.address = address;
+    if (dob !== undefined) user.dob = dob;
+    if (gender !== undefined) user.gender = gender;
+    if (customFields !== undefined) user.customFields = customFields;
+
+    await user.save();
+
+    // Return updated user (exclude sensitive fields via auth middleware pattern)
+    const safeUser = await User.findByPk(req.userId, { attributes: { exclude: ['passwordHash', 'pinHash'] } });
+
+    res.json({ success: true, data: { user: safeUser } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * @route   POST /api/auth/set-pin
  * @desc    Set or update PIN for sensitive file access
  * @access  Private

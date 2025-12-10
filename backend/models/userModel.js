@@ -39,6 +39,41 @@ const User = sequelize.define(
         notEmpty: true,
       },
     },
+    mobile: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'mobile',
+    },
+    motherMobile: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'mother_mobile',
+    },
+    fatherMobile: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'father_mobile',
+    },
+    address: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: 'address',
+    },
+    dob: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      field: 'dob',
+    },
+    gender: {
+      type: DataTypes.ENUM('male', 'female', 'other'),
+      allowNull: true,
+      field: 'gender',
+    },
+    customFields: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      field: 'custom_fields',
+    },
     passwordHash: {
       type: DataTypes.STRING,
       allowNull: false,

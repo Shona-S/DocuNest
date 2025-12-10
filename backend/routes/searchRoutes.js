@@ -47,15 +47,23 @@ router.get('/', authenticate, async (req, res, next) => {
 
     const documents = await Document.findAll({
       where: whereClause,
-      attributes: { exclude: ['encryptedKey', 'encryptedIV', 'filePath'] },
+      attributes: { exclude: ['encryptedKey', 'encryptedIV', 'filePath', 'pinHash'] },
       order: [['uploadedAt', 'DESC']],
+    });
+
+    const docs = documents.map(d => {
+      const plain = d.get({ plain: true });
+      return {
+        ...plain,
+        name: plain.displayName || plain.originalFilename,
+      };
     });
 
     res.json({
       success: true,
-      count: documents.length,
+      count: docs.length,
       data: {
-        documents,
+        documents: docs,
       },
     });
   } catch (error) {

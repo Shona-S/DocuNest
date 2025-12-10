@@ -77,6 +77,18 @@ const Document = sequelize.define(
         }
       },
     },
+    // Optional display name provided by user at upload time
+    displayName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'display_name',
+    },
+    // Optional per-file PIN hash (bcrypt)
+    pinHash: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'pin_hash',
+    },
     // Encrypted file encryption key (encrypted with master key)
     encryptedKey: {
       type: DataTypes.TEXT, // Base64 encoded encrypted key (can be long)

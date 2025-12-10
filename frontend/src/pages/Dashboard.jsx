@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getFiles } from '../services/api';
+import { getFiles, searchFiles } from '../services/api';
 import { toast } from 'react-toastify';
 import Navbar from '../components/Navbar';
 import FileCard from '../components/FileCard';
@@ -52,7 +52,7 @@ const Dashboard = () => {
 
     try {
       setIsLoading(true);
-      const response = await getFiles({ q: searchQuery, ...filters });
+      const response = await searchFiles({ q: searchQuery, ...filters });
       setFiles(response.data.documents || []);
     } catch (error) {
       // Error is handled by API interceptor
