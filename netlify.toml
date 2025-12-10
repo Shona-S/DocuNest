@@ -1,0 +1,13 @@
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "frontend/dist"
+
+[build.environment]
+  # Ensure verbose Netlify logs during troubleshooting
+  NETLIFY_BUILD_DEBUG = "true"
+  # Node version hint (Netlify will also respect .nvmrc or package.json engines)
+  NODE_VERSION = "18"
+
+[context.production.environment]
+  NODE_ENV = "production"
