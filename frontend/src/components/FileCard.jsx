@@ -14,33 +14,35 @@ const FileCard = ({ file, onDelete }) => {
 
   const handleDownload = async () => {
     try {
-      // If PIN is required, open dialog first
+      setIsDownloading(true);
+      let pin = null;
+      
       if (file.requiresPIN) {
-        setIsDownloading(false);
-        setIsPinOpen(true);
-        return;
+        // PIN is required - show modal/input
+        pin = window.prompt("Enter PIN to download this file:", "");
+        
+        // User cancelled
+        if (pin === null) {
+          toast.info("Download cancelled");
+          setIsDownloading(false);
+          return;
+        }
+        
+        // Validate PIN is not empty
+        if (!pin || pin.trim() === "") {
+          toast.error("PIN cannot be empty");
+          setIsDownloading(false);
+          return;
+        }
+        
+        console.log('[DEBUG] PIN entered, attempting download with PIN');
       }
-
-      setIsDownloading(true);
-      await downloadFile(file.id, file.originalFilename, null);
-      toast.success("File downloaded successfully");
-    } catch (error) {
-      console.error('[ERROR] Download failed:', error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  // PIN dialog state and handlers
-  const [isPinOpen, setIsPinOpen] = useState(false);
-  const handlePinSubmit = async (pin) => {
-    setIsPinOpen(false);
-    try {
-      setIsDownloading(true);
+      
       await downloadFile(file.id, file.originalFilename, pin);
       toast.success("File downloaded successfully");
     } catch (error) {
-      console.error('[ERROR] Download with PIN failed:', error);
+      // handled by API interceptor
+      console.error('[ERROR] Download failed:', error);
     } finally {
       setIsDownloading(false);
     }
@@ -95,8 +97,8 @@ const FileCard = ({ file, onDelete }) => {
   };
 
   return (
-    <>
-    <div className="card card-hover p-4 sm:p-6">
+      <>
+        <div className="card card-hover p-4 sm:p-6">
       <div className="flex items-start justify-between gap-3 sm:gap-4">
         {/* File info */}
         <div className="flex-1 min-w-0">
@@ -209,16 +211,16 @@ const FileCard = ({ file, onDelete }) => {
       </div>
 
       {/* Modal is handled by root-level PreviewProvider */}
-    </div>
-    {/* PIN Dialog for protected downloads */}
-    <PinDialog
-      isOpen={isPinOpen}
-      title="Enter PIN to download"
-      description="This file is protected. Enter the PIN to download."
-      onCancel={() => { setIsPinOpen(false); toast.info('Download cancelled'); }}
-      onSubmit={handlePinSubmit}
-    />
-    </>
+        </div>
+        {/* PIN Dialog for protected downloads */}
+        <PinDialog
+          isOpen={isPinOpen}
+          title="Enter PIN to download"
+          description="This file is protected. Enter the PIN to download."
+          onCancel={() => { setIsPinOpen(false); toast.info('Download cancelled'); }}
+          onSubmit={handlePinSubmit}
+        />
+      </>
   );
 };
 

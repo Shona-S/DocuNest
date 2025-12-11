@@ -17,7 +17,7 @@ const PreviewModal = ({ file, isOpen, onClose, onDownload }) => {
   const [isPinOpen, setIsPinOpen] = useState(false);
   const [pendingPin, setPendingPin] = useState(null);
 
-  // Load preview for files that DO NOT require PIN
+  // Load preview for files that do NOT require PIN
   useEffect(() => {
     if (!isOpen || !file) return;
     if (file.requiresPIN) return; // PIN-protected files handled separately
@@ -236,6 +236,14 @@ const PreviewModal = ({ file, isOpen, onClose, onDownload }) => {
         </div>
       </div>
     </div>
+    {/* PIN Dialog */}
+    <PinDialog
+      isOpen={isPinOpen}
+      title="Enter PIN to preview"
+      description="This file is protected. Enter the PIN to preview."
+      onCancel={() => { setIsPinOpen(false); handleClose(); }}
+      onSubmit={(p) => { setPendingPin(p); }}
+    />
   );
 };
 
