@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../services/api';
 import { toast } from 'react-toastify';
 import Loader from '../components/Loader';
+import Icon from '../assets/icon.svg';
 
 /**
  * Login Page
@@ -66,9 +67,9 @@ const Login = () => {
         {/* Logo and Title */}
         <div className="text-center mb-6 sm:mb-8">
           <div className="flex items-center justify-center mb-3 sm:mb-4">
-            <img 
-              src="/src/assets/icon.svg" 
-              alt="DocuNest" 
+            <img
+              src={Icon}
+              alt="DocuNest"
               className="w-10 h-10 sm:w-12 sm:h-12"
             />
           </div>
