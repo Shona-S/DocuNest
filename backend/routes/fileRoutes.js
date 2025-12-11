@@ -230,8 +230,8 @@ router.get('/', authenticate, async (req, res, next) => {
       whereClause.category = category;
     }
     if (tag) {
-      // For tags stored as comma-separated string, use LIKE
-      whereClause.tags = { [Op.like]: `%${tag}%` };
+      // For tags stored as comma-separated string, use case-insensitive matching
+      whereClause.tags = { [Op.iLike]: `%${tag}%` };
     }
 
     const documents = await Document.findAll({

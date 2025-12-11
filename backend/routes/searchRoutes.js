@@ -28,10 +28,11 @@ router.get('/', authenticate, async (req, res, next) => {
 
     // Text search on filename and tags
     if (q) {
+      // Use case-insensitive matching so searches are not case-sensitive
       whereClause[Op.or] = [
-        { filename: { [Op.like]: `%${q}%` } },
-        { originalFilename: { [Op.like]: `%${q}%` } },
-        { tags: { [Op.like]: `%${q}%` } },
+        { filename: { [Op.iLike]: `%${q}%` } },
+        { originalFilename: { [Op.iLike]: `%${q}%` } },
+        { tags: { [Op.iLike]: `%${q}%` } },
       ];
     }
 
@@ -42,7 +43,7 @@ router.get('/', authenticate, async (req, res, next) => {
 
     // Filter by tag
     if (tag) {
-      whereClause.tags = { [Op.like]: `%${tag}%` };
+      whereClause.tags = { [Op.iLike]: `%${tag}%` };
     }
 
     const documents = await Document.findAll({
