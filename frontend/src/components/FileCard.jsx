@@ -2,6 +2,7 @@ import { useState } from "react";
 import { downloadFile, deleteFile } from "../services/api";
 import { toast } from "react-toastify";
 import Loader from "./Loader";
+import PinDialog from './PinDialog';
 import { usePreview } from '../context/PreviewContext';
 
 const FileCard = ({ file, onDelete }) => {
@@ -13,35 +14,33 @@ const FileCard = ({ file, onDelete }) => {
 
   const handleDownload = async () => {
     try {
-      setIsDownloading(true);
-      let pin = null;
-      
+      // If PIN is required, open dialog first
       if (file.requiresPIN) {
-        // PIN is required - show modal/input
-        pin = window.prompt("Enter PIN to download this file:", "");
-        
-        // User cancelled
-        if (pin === null) {
-          toast.info("Download cancelled");
-          setIsDownloading(false);
-          return;
-        }
-        
-        // Validate PIN is not empty
-        if (!pin || pin.trim() === "") {
-          toast.error("PIN cannot be empty");
-          setIsDownloading(false);
-          return;
-        }
-        
-        console.log('[DEBUG] PIN entered, attempting download with PIN');
+        setIsDownloading(false);
+        setIsPinOpen(true);
+        return;
       }
-      
+
+      setIsDownloading(true);
+      await downloadFile(file.id, file.originalFilename, null);
+      toast.success("File downloaded successfully");
+    } catch (error) {
+      console.error('[ERROR] Download failed:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // PIN dialog state and handlers
+  const [isPinOpen, setIsPinOpen] = useState(false);
+  const handlePinSubmit = async (pin) => {
+    setIsPinOpen(false);
+    try {
+      setIsDownloading(true);
       await downloadFile(file.id, file.originalFilename, pin);
       toast.success("File downloaded successfully");
     } catch (error) {
-      // handled by API interceptor
-      console.error('[ERROR] Download failed:', error);
+      console.error('[ERROR] Download with PIN failed:', error);
     } finally {
       setIsDownloading(false);
     }
@@ -210,6 +209,14 @@ const FileCard = ({ file, onDelete }) => {
 
       {/* Modal is handled by root-level PreviewProvider */}
     </div>
+    {/* PIN Dialog for protected downloads */}
+    <PinDialog
+      isOpen={isPinOpen}
+      title="Enter PIN to download"
+      description="This file is protected. Enter the PIN to download."
+      onCancel={() => { setIsPinOpen(false); toast.info('Download cancelled'); }}
+      onSubmit={handlePinSubmit}
+    />
   );
 };
 
