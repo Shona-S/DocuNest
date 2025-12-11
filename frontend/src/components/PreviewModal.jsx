@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { fetchFileBlob } from "../services/api";
 import Loader from "./Loader";
-import PinDialog from './PinDialog';
 
 /**
  * PreviewModal
@@ -13,20 +12,39 @@ const PreviewModal = ({ file, isOpen, onClose, onDownload }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  // State for PIN dialog flow
-  const [isPinOpen, setIsPinOpen] = useState(false);
-  const [pendingPin, setPendingPin] = useState(null);
-
-  // Load preview for files that do NOT require PIN
   useEffect(() => {
     if (!isOpen || !file) return;
-    if (file.requiresPIN) return; // PIN-protected files handled separately
 
     let cancelled = false;
     const loadPreview = async () => {
       try {
         setIsLoading(true);
-        const blob = await fetchFileBlob(file.id, null);
+        let pin = null;
+        
+        if (file.requiresPIN) {
+          pin = window.prompt("Enter PIN to preview this file:", "");
+          
+          // User cancelled
+          if (pin === null) {
+            if (!cancelled) {
+              handleClose();
+            }
+            return;
+          }
+          
+          // PIN is empty
+          if (!pin || pin.trim() === "") {
+            if (!cancelled) {
+              alert("PIN cannot be empty. Preview cancelled.");
+              handleClose();
+            }
+            return;
+          }
+          
+          console.log('[DEBUG] PIN entered, loading preview with PIN');
+        }
+
+        const blob = await fetchFileBlob(file.id, pin);
         if (cancelled) return;
         const url = URL.createObjectURL(blob);
         setPreviewBlob(blob);
@@ -47,45 +65,6 @@ const PreviewModal = ({ file, isOpen, onClose, onDownload }) => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [isOpen, file]);
-
-  // When modal opens and file requires PIN, show PIN dialog
-  useEffect(() => {
-    if (isOpen && file && file.requiresPIN) {
-      setIsPinOpen(true);
-    } else {
-      setIsPinOpen(false);
-    }
-  }, [isOpen, file]);
-
-  // When a PIN is provided, fetch the preview using that PIN
-  useEffect(() => {
-    if (!isOpen || !file) return;
-    if (!file.requiresPIN) return;
-    if (!pendingPin) return;
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        setIsLoading(true);
-        const blob = await fetchFileBlob(file.id, pendingPin);
-        if (cancelled) return;
-        const url = URL.createObjectURL(blob);
-        setPreviewBlob(blob);
-        setPreviewUrl(url);
-      } catch (error) {
-        console.error('[ERROR] Preview with PIN failed:', error);
-        alert('Failed to load preview with provided PIN');
-        if (!cancelled) handleClose();
-      } finally {
-        if (!cancelled) setIsLoading(false);
-        setPendingPin(null);
-        setIsPinOpen(false);
-      }
-    })();
-
-    return () => { cancelled = true };
-  }, [pendingPin]);
 
   if (!isOpen || !file) return null;
 
@@ -236,14 +215,6 @@ const PreviewModal = ({ file, isOpen, onClose, onDownload }) => {
         </div>
       </div>
     </div>
-    {/* PIN Dialog */}
-    <PinDialog
-      isOpen={isPinOpen}
-      title="Enter PIN to preview"
-      description="This file is protected. Enter the PIN to preview."
-      onCancel={() => { setIsPinOpen(false); handleClose(); }}
-      onSubmit={(p) => { setPendingPin(p); }}
-    />
   );
 };
 

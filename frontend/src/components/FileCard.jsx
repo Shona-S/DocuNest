@@ -2,7 +2,6 @@ import { useState } from "react";
 import { downloadFile, deleteFile } from "../services/api";
 import { toast } from "react-toastify";
 import Loader from "./Loader";
-import PinDialog from './PinDialog';
 import { usePreview } from '../context/PreviewContext';
 
 const FileCard = ({ file, onDelete }) => {
@@ -97,8 +96,7 @@ const FileCard = ({ file, onDelete }) => {
   };
 
   return (
-      <>
-        <div className="card card-hover p-4 sm:p-6">
+    <div className="card card-hover p-4 sm:p-6">
       <div className="flex items-start justify-between gap-3 sm:gap-4">
         {/* File info */}
         <div className="flex-1 min-w-0">
@@ -211,16 +209,7 @@ const FileCard = ({ file, onDelete }) => {
       </div>
 
       {/* Modal is handled by root-level PreviewProvider */}
-        </div>
-        {/* PIN Dialog for protected downloads */}
-        <PinDialog
-          isOpen={isPinOpen}
-          title="Enter PIN to download"
-          description="This file is protected. Enter the PIN to download."
-          onCancel={() => { setIsPinOpen(false); toast.info('Download cancelled'); }}
-          onSubmit={handlePinSubmit}
-        />
-      </>
+    </div>
   );
 };
 
