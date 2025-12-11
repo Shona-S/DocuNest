@@ -95,6 +95,7 @@ const FileCard = ({ file, onDelete }) => {
   };
 
   return (
+    <>
     <div className="card card-hover p-4 sm:p-6">
       <div className="flex items-start justify-between gap-3 sm:gap-4">
         {/* File info */}
@@ -217,6 +218,7 @@ const FileCard = ({ file, onDelete }) => {
       onCancel={() => { setIsPinOpen(false); toast.info('Download cancelled'); }}
       onSubmit={handlePinSubmit}
     />
+    </>
   );
 };
 
